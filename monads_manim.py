@@ -62,6 +62,8 @@ class MonadsScene(Scene):
             labintbool.append(label)
         self.play(*[Create(label) for label in labintbool])
 
+        labintbool[0].add_updater(lambda m: m.next_to(gf[1], LEFT, buff=0.1))
+
         v1, v2 = gf[1], gf[2]
         edge_midpoint = (v1.get_center() + v2.get_center()) / 2
         edge_label = Tex("even").scale(0.5).move_to(edge_midpoint + 0.2 * UP)
@@ -78,7 +80,7 @@ class MonadsScene(Scene):
             self.play(Create(arc), run_time=2)
             self.play(Create(label))
 
-        return gf, labintbool, [edge_label] + labels + [gf.edges[(1,2)]] + arcs
+        return gf, labintbool, [edge_label] + labels + labintbool + [gf.edges[(1,2)]] + arcs
 
     def get_cats(self, n, seed, edge_prob):
         vertices = list(range(1, n + 1))
@@ -149,7 +151,44 @@ class MonadsScene(Scene):
             rate_func=smooth,
             run_time=2.5
         )
-        self.play((FadeOut(d3), FadeOut(label12g)))
+
+        intdot = Dot()
+        intlabel = Tex("$Int$").scale(0.6)
+        intlabel.next_to(intdot, LEFT, buff=0.1)
+        
+        self.play(FadeOut(d3), FadeOut(label12g))
+        self.play(FadeOut(gf), *[FadeOut(m) for m in extras],
+                  gf[1].animate.move_to(ORIGIN), Create(intdot), Create(intlabel))
+
+        loop = Arc(
+            start_angle=PI*0.15,
+            angle=TAU * 0.85,
+            radius=0.45
+        ).move_arc_center_to(gf[1].get_center() + 0.4*LEFT)
+
+        loop.add_tip(at_start=False, tip_length=0.15, tip_width=0.15)
+        endolabel = Tex("$(+ 1)$").scale(0.5)
+        endolabel.next_to(loop, LEFT, buff=0.1)
+        self.play(Create(loop), Create(endolabel))
+        self.wait(1)
+        dendo = Dot().set_color(GOLD)
+        label12endo = Tex("12").scale(0.5)
+        label13endo = Tex("13").scale(0.5)
+        label12endo.next_to(dendo, 2*UP + 2*RIGHT, buff=0.1)
+       
+        self.play(
+            MoveAlongPath(dendo, loop),
+            Transform(label12endo, label13endo),
+            UpdateFromFunc(label12endo, lambda m: m.next_to(dendo, 2*UP + 2*RIGHT, buff=0.1)),
+            rate_func=smooth,
+            run_time=2.5
+        )
+        self.wait(1)
+
+        self.play(FadeOut(loop), FadeOut(endolabel),
+                  FadeOut(dendo), FadeOut(label12endo),
+                  FadeOut(intdot),
+                  FadeOut(intlabel))
 
     def arc_between_circles(self, c1, c2, radius=4, tip=True, arc="arc", color=WHITE):
         start_center = c1.get_center()
@@ -222,7 +261,7 @@ class MonadsScene(Scene):
         self.wait(3)
         self.func_int_bool(gf,extras)
         self.play(*[FadeOut(label) for label in labels])
-        self.play(FadeOut(gf), *[FadeOut(m) for m in extras], FadeOut(hask))
+        self.play(FadeOut(hask))
 
         fuctC = Text("Functor", font_size=30).to_edge(UP)
         self.play(Transform(haskdot, fuctC))
@@ -278,6 +317,6 @@ class MonadsScene(Scene):
 
         arcmrps = self.connect_2cat_edges(cat3, cat4)
         for arcmrp in arcmrps:
-            self.play(Create(arcmrp), run_time=0.5)
+            self.play(Create(arcmrp), run_time=0.2)
 
         self.wait(3)
