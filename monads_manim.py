@@ -174,21 +174,26 @@ class MonadsScene(Scene):
         dendo = Dot().set_color(GOLD)
         label12endo = Tex("12").scale(0.5)
         label13endo = Tex("13").scale(0.5)
-        label12endo.next_to(dendo, 2*UP + 2*RIGHT, buff=0.1)
+        label12endo.next_to(dendo, UP + RIGHT, buff=0.1)
+        endotext = Text("endomorphism",font_size=20)
+        endotext.next_to(dendo, 4*RIGHT)
        
         self.play(
             MoveAlongPath(dendo, loop),
             Transform(label12endo, label13endo),
-            UpdateFromFunc(label12endo, lambda m: m.next_to(dendo, 2*UP + 2*RIGHT, buff=0.1)),
+            UpdateFromFunc(label12endo, lambda m: m.next_to(dendo, DOWN + 1.5*RIGHT, buff=0.1)),
+            FadeIn(endotext),
+            Circumscribe(endotext, color=GOLD),
             rate_func=smooth,
             run_time=2.5
         )
         self.wait(1)
 
+
         self.play(FadeOut(loop), FadeOut(endolabel),
                   FadeOut(dendo), FadeOut(label12endo),
-                  FadeOut(intdot),
-                  FadeOut(intlabel))
+                  FadeOut(intdot),FadeOut(intlabel),
+                  FadeOut(endotext))
 
     def arc_between_circles(self, c1, c2, radius=4, tip=True, arc="arc", color=WHITE):
         start_center = c1.get_center()
@@ -199,11 +204,12 @@ class MonadsScene(Scene):
         end_point = end_center - c2.radius * direction_unit
 
         if(arc == "Line"):
-            arc = Line(start_point, end_point, stroke_width=10, color=PURPLE)
+            arc = Line(start_point, end_point, stroke_width=10).set_color(
+                color=["#5ce1e6","#ff72e4","#5ce1e6"])
         else:
             arc = ArcBetweenPoints(start_point, end_point, radius=radius, stroke_width=6, color=color)
         if tip:
-            arc.add_tip(tip_length=0.2, tip_width=0.2)
+            arc.add_tip(tip_length=0.2, tip_width=0.2,tip_shape=StealthTip)
         return arc
 
     def connect_2cat_edges(self, cat1, cat2):
@@ -213,10 +219,13 @@ class MonadsScene(Scene):
         cat2edges = [cat2.edges[e] for e in cat2.edges.keys()]
 
         for i in range(len(cat1edges)):
-            arcedges = ArcBetweenPoints(cat1edges[i].get_center(),
-                                       cat2edges[i%(len(cat2edges))].get_center(),
-                                       radius=8, stroke_width=2, color=BLUE_C)
-            arcedges.add_tip(tip_length=0.15, tip_width=0.15)
+            arcedges = ArcBetweenPoints(
+                cat1edges[i].get_center(),
+                cat2edges[i%(len(cat2edges))].get_center(),
+                radius=8, stroke_width=2).set_color(
+                    color=["#5de0e6", "#004aad"])
+            arcedges.add_tip(tip_length=0.15, tip_width=0.15).get_tip().set_color(
+                color=["#004aad"])
             arcs.append(arcedges)
         return arcs
 
@@ -225,8 +234,11 @@ class MonadsScene(Scene):
         for i in cat1.vertices:
             arcobjs = ArcBetweenPoints(cat1[i].get_center(),
                                        cat2[i%(len(cat2.vertices))+1].get_center(),
-                                       radius=8, stroke_width=2, color=ORANGE)
-            arcobjs.add_tip(tip_length=0.15, tip_width=0.15)
+                                       radius=8, stroke_width=2).set_color(
+                                           color=["#ff3131", "#ff914d", "#fff84d"]
+                                       )
+            arcobjs.add_tip(tip_length=0.15, tip_width=0.15).get_tip().set_color(
+                color=["#fff84d"])
             arcs.append(arcobjs)
         return arcs
 
@@ -250,7 +262,7 @@ class MonadsScene(Scene):
         self.wait(5)
 
         haskdot = Dot()
-        hask = Tex("$Hask$", font_size=30).to_edge(UP)
+        hask = Tex("Hask", font_size=30).to_edge(UP)
         self.play(FadeOut(category), FadeOut(categoryt), FadeOut(g2), FadeOut(obj), FadeOut(mrp), FadeOut(*lawsC))
         self.clear()
         self.play(Transform(g, haskdot))
@@ -260,7 +272,6 @@ class MonadsScene(Scene):
         gf, labels, extras = self.show_gf_category()
         self.wait(3)
         self.func_int_bool(gf,extras)
-        self.play(*[FadeOut(label) for label in labels])
         self.play(FadeOut(hask))
 
         fuctC = Text("Functor", font_size=30).to_edge(UP)
@@ -317,6 +328,22 @@ class MonadsScene(Scene):
 
         arcmrps = self.connect_2cat_edges(cat3, cat4)
         for arcmrp in arcmrps:
-            self.play(Create(arcmrp), run_time=0.2)
+            self.play(Create(arcmrp), run_time=0.1)
 
+        
+        self.wait(3)
+        self.play(
+            FadeOut(arc3_4),
+            FadeOut(circle_4),
+            FadeOut(circle_3),
+            FadeOut(cat3),
+            FadeOut(cat4),
+            *[FadeOut(arcmrp) for arcmrp in arcmrps]
+        )
+
+
+        self.play(Transform(haskdot, hask))
+
+        
+        
         self.wait(3)
