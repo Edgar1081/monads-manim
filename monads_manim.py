@@ -330,20 +330,191 @@ class MonadsScene(Scene):
         for arcmrp in arcmrps:
             self.play(Create(arcmrp), run_time=0.1)
 
+
+
         
         self.wait(3)
         self.play(
             FadeOut(arc3_4),
             FadeOut(circle_4),
-            FadeOut(circle_3),
-            FadeOut(cat3),
             FadeOut(cat4),
+            cat3.animate.move_to(ORIGIN),
+            circle_3.animate.move_to(ORIGIN),
             *[FadeOut(arcmrp) for arcmrp in arcmrps]
         )
 
 
-        self.play(Transform(haskdot, hask))
+        self.play(
+            cat3.animate.move_to(ORIGIN),
+            circle_3.animate.move_to(ORIGIN),
+        )
 
+        endoFunc = Arc(
+            start_angle=PI*0.40,
+            angle=TAU * 0.60,
+            radius=1,
+            stroke_width=8
+        ).set_color(color=["#0097b2", "#7ed957", "#0097b2"]).move_arc_center_to(
+            cat3.get_center() + 1.5*LEFT)
+        endoFunc.add_tip(at_start=False, tip_length=0.2, tip_width=0.2, tip_shape=StealthTip)
+
+        endoFuncText = Text("endofunctor",font_size=20)
+        endoFuncText.next_to(circle_3, 2*RIGHT)
+
+        self.play(Create(endoFunc),
+                  Create(endoFuncText),
+                  Circumscribe(endoFuncText,
+                               color=["#0097b2", "#7ed957", "#0097b2"])
+                  )
+
+        self.wait(3)
+
+        self.play(
+            FadeOut(circle_3),
+            FadeOut(cat3),
+            FadeOut(endoFunc),
+            FadeOut(endoFuncText),
+        )
+
+        self.wait(3)
+
+    
+def hask_cat(objects, names, arcs, arclabs, lay):
+    edge_config = {
+        "stroke_width": 4,
+        "tip_config": {
+            "tip_length": 0.2,
+            "tip_width": 0.2
+        }
+    }
+    labelsText = []
+    edgesLabs = []
+    graph = DiGraph(objects, arcs, edge_config=edge_config,layout=lay)
+    for ob in graph.vertices:
+        dot = graph.vertices[ob]
+        dot.scale(0.65)
+        name, pos = names[ob]
+        label = Tex("$" + name + "$").scale(0.8)
+        label.add_updater(lambda m, d=dot, p=pos: m.next_to(d, p, buff=0.1))
+        labelsText.append(label)
+
+    for elabk in arclabs:
+        arc = graph.edges[elabk]
+        elabv, elabp = arclabs[elabk]
+        label = Tex(elabv).scale(0.8)
+        label.add_updater(lambda m, d=arc, p=elabp: m.next_to(d, p, buff=0.1))
+        edgesLabs.append(label)
+
+    return graph, labelsText, edgesLabs
+
+def get_cats(n, seed, edge_prob):
+    vertices = list(range(1, n + 1))
+    random.seed(seed)
+    edges = [
+        (i, j)
+        for i in vertices
+        for j in vertices
+        if i != j and random.random() < edge_prob
+    ]
+    edge_config_GF = {
+        "stroke_width": 4,
+        "tip_config": {
+            "tip_length": 0.2,
+            "tip_width": 0.2
+        }
+    }
+    return DiGraph(vertices,edges,
+                   edge_config=edge_config_GF,
+                   vertex_config={"color":RED}, layout="circular")
+
+def endo_func(cat_circle,pos=1, labelLay=None,):
+    ang = PI/4
+    h_orientation = 1
+    v_orientation = 1
+    match pos:
+        case 2:
+            h_orientation = 2
+        case 3:
+            h_orientation = 2
+            v_orientation = 2
+        case 4:
+            h_orientation = 1
+            v_orientation = 2
+
+    ang = ang*pos
+
+    p = cat_circle.point_at_angle(ang + (pos-1)*(PI/4))
+    endoFunc = Arc(
+        start_angle=PI*0.0,
+        angle=TAU * 0.90,
+        radius=1,
+        stroke_width=8
+    ).set_color(color=["#0097b2", "#7ed957", "#0097b2"])
+    endoFunc.add_tip(at_start=False, tip_length=0.2, tip_width=0.2, tip_shape=StealthTip)
+    endoFunc.move_arc_center_to(p)
+    print(type(p))
+    if labelLay is not None:
+        name, pos = labelLay
+        endolab = Tex(name).scale(0.8)
+        endolab.add_updater(lambda m, a=endoFunc, p=pos: m.next_to(a,p,buff=0.1))
+        return endoFunc, endolab
+
+    return endoFunc
+
+def values_path(digraph, values_from_to):
+   print("xd")
+   
         
+class FunctorScene(Scene):
+    def construct(self):
+        centerDot = Dot()
+        haskCat = get_cats(6, 1234, 0.1)
+        circleHask = Circle(color=["#8c52ff", "#5ce1e6"]).surround(haskCat, buffer_factor=1)
+        hask = Tex("Hask", font_size=30).to_edge(UP)
+
+        self.play(
+            Create(centerDot)
+        )
+        endoList, endoLab = endo_func(circleHask,4,("[  ]", UP + LEFT))
+
+        self.play(
+            Transform(centerDot, hask),
+            Create(haskCat),
+            Create(circleHask),
+            Create(endoList),
+            Create(endoLab)
+        )
+
+        self.wait(4)
+
+        layout={1: ORIGIN + 2*LEFT, 2: ORIGIN+2*RIGHT}
+        edgesLabsLay = {(1,2): ("[ ]", DOWN)}
+        dotnames = {1: ("Int", LEFT), 2: ("Int", RIGHT)}
+        haskListFunctor, labels, edgesLabs= hask_cat([1, 2], dotnames,
+                                                     [(1, 2)],edgesLabsLay,layout)
+        self.play(
+            Create(hask),
+            Create(haskListFunctor),
+            *[Create(label) for label in labels],
+            *[Create(elabel) for elabel in edgesLabs]
+        )
+
+        self.wait(3)
+        self.play(
+            haskListFunctor.animate.move_to(2*DOWN)
+        )
         
+        layout2={1: ORIGIN + 2*LEFT, 2: ORIGIN+2*RIGHT}
+        edgesLabsLay2 = {(1,2): ("[ ]", UP)}
+        dotnames2 = {1: ("Int", LEFT), 2: ("Int", RIGHT)}
+        haskListFunctor2, labels2, edgesLabs2= hask_cat([1, 2], dotnames2,
+                                                        [(1, 2)],edgesLabsLay2,layout2)
+        self.play(
+            Create(haskListFunctor2),
+            *[Create(label) for label in labels2],
+            *[Create(elabel) for elabel in edgesLabs2]
+        )
+        self.play(
+            haskListFunctor2.animate.move_to(2*UP)
+        )
         self.wait(3)
