@@ -467,6 +467,70 @@ def values_path(digraph, values_from_to):
         
 class FunctorScene(Scene):
     def construct(self):
+        custom_template = TexTemplate()
+        custom_template.add_to_preamble(r"\centering")
+        funcDefOb = MathTex(
+            r"\mathcal{C}, \mathcal{D}\ \text{categories}\\"
+            r"\text{A functor } F \text{ associates each object } X \in \mathcal{C}\\"
+            r"\text{to an object } F(X) \in \mathcal{D}",
+            substrings_to_isolate=("F", "X", r"\mathcal{C}", r"\mathcal{D}"),
+            tex_template=custom_template
+        )
+        funcDefOb.set_color_by_tex("F", color=["#0097b2", "#7ed957","#0097b2"])
+        funcDefOb.set_color_by_tex("X", YELLOW)
+        funcDefOb.set_color_by_tex(r"\mathcal{C}", BLUE)
+        funcDefOb.set_color_by_tex(r"\mathcal{D}", GREEN)
+
+        funcDefOb.move_to(2 * UP)
+
+        funcDefArr = MathTex(
+            r"F \text{ associates each morphism } f : X \rightarrow Y \text{ in } \mathcal{C}\\",
+            r"\text{to a morphism } F(f) : F(X) \rightarrow F(Y) \text{ in } \mathcal{D}",
+            substrings_to_isolate=("F", "f", "F(f)", "F(X)", "F(Y)", r"\mathcal{C}", r"\mathcal{D}"),
+            tex_template=custom_template
+        )
+        funcDefArr.set_color_by_tex("F", TEAL)
+        funcDefArr.set_color_by_tex("f", ORANGE)
+        funcDefArr.set_color_by_tex("F(f)", PURPLE)
+        funcDefArr.set_color_by_tex("F(X)", PURPLE)
+        funcDefArr.set_color_by_tex("F(Y)", PURPLE)
+        funcDefArr.set_color_by_tex(r"\mathcal{C}", BLUE)
+        funcDefArr.set_color_by_tex(r"\mathcal{D}", GREEN)
+
+        funcDefArr.next_to(funcDefOb, DOWN, buff=0.5)
+
+        funclawId = MathTex(
+            r"F(\text{Id}_X) = \text{Id}_{F(X)}",
+            substrings_to_isolate=("F", "X", "F(X)"),
+            tex_template=custom_template
+        )
+        funclawId.set_color_by_tex("F", TEAL)
+        funclawId.set_color_by_tex("X", YELLOW)
+        funclawId.set_color_by_tex("F(X)", PURPLE)
+        funclawId.move_to(2 * UP)
+
+        funclawCom = MathTex(
+            r"F(g \circ f) = F(g) \circ F(f)",
+            substrings_to_isolate=("F", "f", "g"),
+            tex_template=custom_template
+        )
+        funclawCom.set_color_by_tex("F", TEAL)
+        funclawCom.set_color_by_tex("f", ORANGE)
+        funclawCom.set_color_by_tex("g", GREEN)
+        funclawCom.next_to(funclawId, DOWN, buff=0.5)
+
+        self.play(Write(funcDefOb))
+        self.play(Write(funcDefArr))
+        self.wait(4)
+        self.play(Unwrite(funcDefOb))
+        self.play(Unwrite(funcDefArr))
+
+        self.play(Write(funclawId))
+        self.play(Write(funclawCom))
+        self.wait(3)
+        self.play(Unwrite(funclawId))
+        self.play(Unwrite(funclawCom))
+
         centerDot = Dot()
         haskCat = get_cats(6, 1234, 0.1)
         circleHask = Circle(color=["#8c52ff", "#5ce1e6"]).surround(haskCat, buffer_factor=1)
@@ -475,10 +539,13 @@ class FunctorScene(Scene):
         self.play(
             Create(centerDot)
         )
-        endoList, endoLab = endo_func(circleHask,4,("[  ]", UP + LEFT))
 
         self.play(
             Transform(centerDot, hask),
+        )
+        endoList, endoLab = endo_func(circleHask,4,("[  ]", UP + LEFT))
+
+        self.play(
             Create(haskCat),
             Create(circleHask),
             Create(endoList),
