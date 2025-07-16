@@ -429,30 +429,27 @@ def get_cats(n, seed, edge_prob):
 
 def endo_func(cat_circle,pos=1, labelLay=None,):
     ang = PI/4
-    h_orientation = 1
-    v_orientation = 1
+    shift=(2/6)
     match pos:
         case 2:
-            h_orientation = 2
+            shift+=(1/2)
         case 3:
-            h_orientation = 2
-            v_orientation = 2
+            shift+=2*(1/2)
         case 4:
-            h_orientation = 1
-            v_orientation = 2
+            shift+=3*(1/2)
 
     ang = ang*pos
 
-    p = cat_circle.point_at_angle(ang + (pos-1)*(PI/4))
     endoFunc = Arc(
-        start_angle=PI*0.0,
+        start_angle=PI+shift*PI,
         angle=TAU * 0.90,
         radius=1,
         stroke_width=8
     ).set_color(color=["#0097b2", "#7ed957", "#0097b2"])
+    larger_circ = Circle().surround(cat_circle, buffer_factor=endoFunc.radius)
+    p = larger_circ.point_at_angle(ang + (pos-1)*(PI/4))
     endoFunc.add_tip(at_start=False, tip_length=0.2, tip_width=0.2, tip_shape=StealthTip)
     endoFunc.move_arc_center_to(p)
-    print(type(p))
     if labelLay is not None:
         name, pos = labelLay
         endolab = Tex(name).scale(0.8)
@@ -461,63 +458,74 @@ def endo_func(cat_circle,pos=1, labelLay=None,):
 
     return endoFunc
 
+def color_substring(tex, subs, colors):
+    return -1
+
+
 def values_path(digraph, values_from_to):
    print("xd")
    
         
 class FunctorScene(Scene):
     def construct(self):
-        custom_template = TexTemplate()
-        custom_template.add_to_preamble(r"\centering")
-        funcDefOb = MathTex(
-            r"\mathcal{C}, \mathcal{D}\ \text{categories}\\"
-            r"\text{A functor } F \text{ associates each object } X \in \mathcal{C}\\"
-            r"\text{to an object } F(X) \in \mathcal{D}",
-            substrings_to_isolate=("F", "X", r"\mathcal{C}", r"\mathcal{D}"),
-            tex_template=custom_template
+        funcDefOb = Tex(
+            r"$\mathcal{C}$, $\mathcal{D}$ categories\\"
+            r"A functor F associates each object $X \in \mathcal{C}$\\"
+            r"to an object $F(X) \in \mathcal{D}$",
         )
-        funcDefOb.set_color_by_tex("F", color=["#0097b2", "#7ed957","#0097b2"])
-        funcDefOb.set_color_by_tex("X", YELLOW)
-        funcDefOb.set_color_by_tex(r"\mathcal{C}", BLUE)
-        funcDefOb.set_color_by_tex(r"\mathcal{D}", GREEN)
+        funcDefOb[0][0].set_color("#0097b2")
+        funcDefOb[0][2].set_color("#7ed957")
+        funcDefOb[0][21].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefOb[0][42].set_color(["#ff3131"])
+        funcDefOb[0][44].set_color(["#0097b2"])
+        funcDefOb[0][55:57].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefOb[0][57].set_color(["#ff3131"])
+        funcDefOb[0][58].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefOb[0][60].set_color(["#7ed957"])
 
         funcDefOb.move_to(2 * UP)
 
-        funcDefArr = MathTex(
-            r"F \text{ associates each morphism } f : X \rightarrow Y \text{ in } \mathcal{C}\\",
-            r"\text{to a morphism } F(f) : F(X) \rightarrow F(Y) \text{ in } \mathcal{D}",
-            substrings_to_isolate=("F", "f", "F(f)", "F(X)", "F(Y)", r"\mathcal{C}", r"\mathcal{D}"),
-            tex_template=custom_template
+        funcDefArr = Tex(
+            r"F  associates each morphism  $f : X \rightarrow Y$  in  $\mathcal{C}$\\"
+            r"to a morphism  $F(f) : F(X) \rightarrow F(Y)$  in  $\mathcal{D}$",
         )
-        funcDefArr.set_color_by_tex("F", TEAL)
-        funcDefArr.set_color_by_tex("f", ORANGE)
-        funcDefArr.set_color_by_tex("F(f)", PURPLE)
-        funcDefArr.set_color_by_tex("F(X)", PURPLE)
-        funcDefArr.set_color_by_tex("F(Y)", PURPLE)
-        funcDefArr.set_color_by_tex(r"\mathcal{C}", BLUE)
-        funcDefArr.set_color_by_tex(r"\mathcal{D}", GREEN)
+        funcDefArr[0][0].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][25].set_color("#ff3131")
+        funcDefArr[0][27].set_color("#ff3131")
+        funcDefArr[0][30].set_color("#0097b2")
+        funcDefArr[0][42:44].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][45].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][47:49].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][50].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][49].set_color("#ff3131")
+        funcDefArr[0][52:54].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][55].set_color(["#0097b2","#7ed957","#0097b2"])
+        funcDefArr[0][54].set_color("#ff3131")
+        funcDefArr[0][58].set_color("#7ed957")
 
         funcDefArr.next_to(funcDefOb, DOWN, buff=0.5)
 
-        funclawId = MathTex(
-            r"F(\text{Id}_X) = \text{Id}_{F(X)}",
-            substrings_to_isolate=("F", "X", "F(X)"),
-            tex_template=custom_template
+
+        funclawId = Tex(
+            r"$F(Id_X) = Id_{F(X)}$"
         )
-        funclawId.set_color_by_tex("F", TEAL)
-        funclawId.set_color_by_tex("X", YELLOW)
-        funclawId.set_color_by_tex("F(X)", PURPLE)
+        funclawId[0][0:2].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawId[0][5].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawId[0][4].set_color("#ff3131")
+        funclawId[0][9:11].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawId[0][12].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawId[0][11].set_color("#ff3131")
         funclawId.move_to(2 * UP)
 
-        funclawCom = MathTex(
-            r"F(g \circ f) = F(g) \circ F(f)",
-            substrings_to_isolate=("F", "f", "g"),
-            tex_template=custom_template
+        funclawCom = Tex(
+            r"$F(g \circ f) = F(g) \circ F(f)$",
         )
-        funclawCom.set_color_by_tex("F", TEAL)
-        funclawCom.set_color_by_tex("f", ORANGE)
-        funclawCom.set_color_by_tex("g", GREEN)
-        funclawCom.next_to(funclawId, DOWN, buff=0.5)
+        funclawCom[0][0:2].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawCom[0][5].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawCom[0][7:9].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawCom[0][10].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawCom[0][12:14].set_color(["#0097b2","#7ed957","#0097b2"])
+        funclawCom[0][15].set_color(["#0097b2","#7ed957","#0097b2"])
 
         self.play(Write(funcDefOb))
         self.play(Write(funcDefArr))
@@ -543,7 +551,7 @@ class FunctorScene(Scene):
         self.play(
             Transform(centerDot, hask),
         )
-        endoList, endoLab = endo_func(circleHask,4,("[  ]", UP + LEFT))
+        endoList, endoLab = endo_func(circleHask,1,("[  ]", UP + RIGHT))
 
         self.play(
             Create(haskCat),
