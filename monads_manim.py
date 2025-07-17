@@ -393,15 +393,20 @@ def hask_cat(objects, names, arcs, arclabs, lay):
     for ob in graph.vertices:
         dot = graph.vertices[ob]
         dot.scale(0.65)
+        dot.set_color(RED)
         name, pos = names[ob]
         label = Tex("$" + name + "$").scale(0.8)
-        label.add_updater(lambda m, d=dot, p=pos: m.next_to(d, p, buff=0.1))
+        label.add_updater(lambda m, d=dot, p=pos: m.next_to(d, p, buff=0.2))
         labelsText.append(label)
 
     for elabk in arclabs:
+
         arc = graph.edges[elabk]
         elabv, elabp = arclabs[elabk]
-        label = Tex(elabv).scale(0.8)
+        if type (elabv) == Tex:
+            label = elabv
+        else:
+            label = Tex(elabv).scale(0.6)
         label.add_updater(lambda m, d=arc, p=elabp: m.next_to(d, p, buff=0.1))
         edgesLabs.append(label)
 
@@ -446,7 +451,8 @@ def endo_func(cat_circle,pos=1, labelLay=None,):
         radius=1,
         stroke_width=8
     ).set_color(color=["#0097b2", "#7ed957", "#0097b2"])
-    larger_circ = Circle().surround(cat_circle, buffer_factor=endoFunc.radius)
+    endoFunc.scale(0.8)
+    larger_circ = Circle().surround(cat_circle, buffer_factor=endoFunc.radius + 0.02)
     p = larger_circ.point_at_angle(ang + (pos-1)*(PI/4))
     endoFunc.add_tip(at_start=False, tip_length=0.2, tip_width=0.2, tip_shape=StealthTip)
     endoFunc.move_arc_center_to(p)
@@ -462,9 +468,34 @@ def color_substring(tex, subs, colors):
     return -1
 
 
-def values_path(digraph, values_from_to):
-   print("xd")
-   
+def values_path(scene,digraph, values_from_to):
+    for pre_value, arc, post_value, pos, color in values_from_to:
+        dot = Dot().set_color(color)
+        path = digraph.edges[arc]
+        if type(pre_value) == Tex:
+            pre_label=pre_value
+        else:
+            pre_label = Tex(pre_value)
+        if type(post_value) == Tex:
+            post_label=post_value
+        else:
+            post_label = Tex(post_value)
+        pre_label.scale(0.6)
+        post_label.scale(0.6)
+        pre_label.next_to(dot, pos, buff=0.1)
+        pre_label.add_updater(lambda m, d=dot, p=pos: m.next_to(d, p, buff=0.2))
+        post_label.add_updater(lambda m, d=dot, p=pos: m.next_to(d, p, buff=0.2))
+        scene.add(dot,pre_label)
+        scene.play(
+            MoveAlongPath(dot, path),
+            Transform(pre_label, post_label),
+            rate_func=smooth,
+            run_time=2.5
+        )
+        scene.play(
+            FadeOut(dot),
+            FadeOut(pre_label)
+        )
         
 class FunctorScene(Scene):
     def construct(self):
@@ -551,7 +582,7 @@ class FunctorScene(Scene):
         self.play(
             Transform(centerDot, hask),
         )
-        endoList, endoLab = endo_func(circleHask,1,("[  ]", UP + RIGHT))
+        endoList, endoLab = endo_func(circleHask,1,(r"$\boldsymbol{[\hspace{2mm}]}$", DOWN + RIGHT))
 
         self.play(
             Create(haskCat),
@@ -563,11 +594,15 @@ class FunctorScene(Scene):
         self.wait(4)
 
         layout={1: ORIGIN + 2*LEFT, 2: ORIGIN+2*RIGHT}
-        edgesLabsLay = {(1,2): ("[ ]", DOWN)}
+        edgesLabsLay = {(1,2): (r"$(+10)$", DOWN)}
         dotnames = {1: ("Int", LEFT), 2: ("Int", RIGHT)}
         haskListFunctor, labels, edgesLabs= hask_cat([1, 2], dotnames,
                                                      [(1, 2)],edgesLabsLay,layout)
         self.play(
+            FadeOut(haskCat),
+            FadeOut(circleHask),
+            FadeOut(endoList),
+            FadeOut(endoLab),
             Create(hask),
             Create(haskListFunctor),
             *[Create(label) for label in labels],
@@ -580,10 +615,13 @@ class FunctorScene(Scene):
         )
         
         layout2={1: ORIGIN + 2*LEFT, 2: ORIGIN+2*RIGHT}
-        edgesLabsLay2 = {(1,2): ("[ ]", UP)}
-        dotnames2 = {1: ("Int", LEFT), 2: ("Int", RIGHT)}
+        edgesLabsLay2 = {(1,2):(
+            r"$map::(Int \rightarrow Int) \rightarrow [Int] \rightarrow [Int]$\\",
+                          UP)}
+        dotnames2 = {1: ("[Int]", LEFT), 2: ("[Int]", RIGHT)}
         haskListFunctor2, labels2, edgesLabs2= hask_cat([1, 2], dotnames2,
                                                         [(1, 2)],edgesLabsLay2,layout2)
+
         self.play(
             Create(haskListFunctor2),
             *[Create(label) for label in labels2],
@@ -591,5 +629,61 @@ class FunctorScene(Scene):
         )
         self.play(
             haskListFunctor2.animate.move_to(2*UP)
+        )
+
+        maptrans = Tex(
+            r"$map (+10) :: [Int] \rightarrow [Int]$\\").scale(0.6).move_to(edgesLabs2[0])
+        self.play(Transform(edgesLabs2[0], maptrans))
+        self.play(
+            maptrans[0][3:8].animate.set_color(["#0097b2"]),
+            maptrans[0][9:].animate.set_color(["#7ed957"]),
+        )
+
+
+        layout3={1: ORIGIN + 2*LEFT + 2*DOWN, 2: ORIGIN+2*RIGHT+2*DOWN,
+                 3:ORIGIN + 2*LEFT + 2*UP, 4: ORIGIN+2*RIGHT+2*UP}
+
+
+        edgesLabsLay3 = {(1,2):(r"$(+10)$",DOWN),
+                         (3,4): (maptrans,UP),
+                         (1,3): (r"$[\hspace{2mm}]$", LEFT),
+                         (2,4): (r"$[\hspace{2mm}]$", RIGHT)}
+        dotnames3 = {1: ("Int", LEFT), 2: ("Int", RIGHT),3:("[Int]",LEFT), 4:("[Int]", RIGHT)}
+
+        hask_dots, labels3, edgesLabs3 = hask_cat([1,2,3,4],
+                                                  dotnames3,
+                                                  [(1,2),(3,4),(1,3),(2,4)],
+                                                  edgesLabsLay3,
+                                                  layout3)
+        self.wait(3)
+        self.play(
+            FadeIn(hask_dots),
+            *[Create(label) for label in labels3],
+            *[Create(elabel) for elabel in edgesLabs3]
+        )
+
+        self.wait(3)
+        self.play(
+            FadeOut(haskListFunctor2),
+            *[FadeOut(label) for label in labels2],
+            *[FadeOut(elabel) for elabel in edgesLabs2],
+            FadeOut(hask),
+            FadeOut(haskListFunctor),
+            *[FadeOut(label) for label in labels],
+            *[FadeOut(elabel) for elabel in edgesLabs]
+        )
+        self.wait(3)
+
+        values_path(self,hask_dots,
+                    [(Tex("$5$"), (1,2), Tex("$15$"), UP, ["#0097b2"]),
+                     (Tex("$15$"), (2,4), Tex("$[15]$"), 1.5*RIGHT+DOWN, ["#7ed957"]),
+                     (Tex("$5$"), (1,3), Tex("$[5]$"), 1.5*LEFT+DOWN, ["#7ed957"]),
+                     (Tex("$[5]$"), (3,4), Tex("$[15]$"), DOWN, ["#0097b2"])])
+        
+        self.wait(3)
+        self.play(
+            FadeOut(hask_dots),
+            *[FadeOut(label) for label in labels3],
+            *[FadeOut(elabel) for elabel in edgesLabs3],
         )
         self.wait(3)
