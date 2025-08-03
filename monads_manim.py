@@ -686,4 +686,4 @@ class FunctorScene(Scene):
             *[FadeOut(label) for label in labels3],
             *[FadeOut(elabel) for elabel in edgesLabs3],
         )
-        self.wait(3)
+        self.wait(4)
